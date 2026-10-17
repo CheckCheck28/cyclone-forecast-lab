@@ -2,6 +2,8 @@
 
 **Machine-learning forecasts of tropical-cyclone track and intensity (6-72 h) for every ocean basin, with 15+ models benchmarked head-to-head and an interactive browser app.**
 
+**[Live demo](https://<your-username>.github.io/cyclone-forecast-lab/)**
+
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue) ![License](https://img.shields.io/badge/license-MIT-green) ![Status](https://img.shields.io/badge/status-research%20%2F%20portfolio-lightgrey)
 
 > **About this project:** a personal side project, built with heavy AI assistance ("vibe-coded" with Claude).
