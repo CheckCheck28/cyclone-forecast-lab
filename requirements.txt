@@ -1,0 +1,11 @@
+numpy
+pandas
+scipy
+scikit-learn
+xgboost
+matplotlib
+joblib
+# optional extras
+lightgbm   # adds LightGBM to the model comparison
+catboost   # adds CatBoost to the model comparison
+cartopy    # coastlines on static maps

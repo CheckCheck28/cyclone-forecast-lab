@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cyclone Forecast Lab</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap">
+<style>
+:root{--bg:#f3f6f9;--ink:#0d1b2a;--mut:#64748b;--pan:#fff;--rule:#e2e8f0;--ac:#0e7490;--bad:#c8201f;--sh:0 1px 2px rgba(15,30,50,.06),0 8px 24px rgba(15,30,50,.05)}
+@media(prefers-color-scheme:dark){:root{--bg:#0b141c;--ink:#e6eef5;--mut:#8aa0b2;--pan:#121f2a;--rule:#223545;--ac:#38bdd8;--bad:#ff7b7b;--sh:0 1px 2px rgba(0,0,0,.4)}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 Inter,"Segoe UI","Helvetica Neue",Arial,sans-serif;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
+header{display:flex;flex-wrap:wrap;gap:10px 28px;align-items:center;padding:12px 24px;background:linear-gradient(120deg,#0a1a2a,#12405a);color:#eaf2f7}
+header h1{font-size:18px;margin:0;font-weight:700;display:flex;align-items:center;gap:10px}
+header h1:before{content:"";width:24px;height:24px;border-radius:50%;background:conic-gradient(#5ec8e5,#0e7490,#5ec8e5);-webkit-mask:radial-gradient(circle 4px,transparent 97%,#000 100%);mask:radial-gradient(circle 4px,transparent 97%,#000 100%)}
+#badge{margin-left:auto;font-size:12px;opacity:.75}
+nav{display:flex;gap:2px;background:rgba(255,255,255,.1);padding:3px;border-radius:999px}
+nav button{background:none;border:0;color:#b4c8d6;font:inherit;padding:6px 16px;border-radius:999px;cursor:pointer}
+nav button.on{background:#fff;color:#0a1a2a;font-weight:600}
+.tab{display:none;grid-template-columns:300px 1fr;gap:18px;padding:18px 24px;align-items:start}.tab.on{display:grid}
+aside,.card{background:var(--pan);border:1px solid var(--rule);border-radius:12px;padding:16px;box-shadow:var(--sh)}
+aside{position:sticky;top:12px}aside>b,.card>b{font-size:15px}
+aside label{display:block;margin:12px 0 4px;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--mut)}
+input,select,button.go{width:100%;padding:8px 10px;font:inherit;border:1px solid var(--rule);border-radius:8px;background:var(--bg);color:var(--ink)}
+input:focus,select:focus{outline:2px solid color-mix(in srgb,var(--ac) 40%,transparent);border-color:var(--ac)}
+button.go{background:linear-gradient(120deg,#0e7490,#155e75);color:#fff;border:0;margin-top:16px;cursor:pointer;font-weight:600;padding:10px}
+button.go:hover{filter:brightness(1.1)}
+input[type=checkbox]{width:auto}.chk{display:flex;flex-wrap:wrap;gap:2px 4px}.chk label{display:inline-flex;gap:5px;align-items:center;margin:2px 4px 2px 0;padding:3px 9px;border:1px solid var(--rule);border-radius:999px;font-size:12px;font-weight:400;letter-spacing:0;text-transform:none;color:var(--ink);cursor:pointer}
+aside a{color:var(--ac);font-weight:600;text-transform:none;letter-spacing:0;cursor:pointer}
+.map{height:460px;border:1px solid var(--rule);border-radius:12px;box-shadow:var(--sh)}.stack>*+*{margin-top:16px}
+table{border-collapse:collapse;width:100%;font-size:13px;margin:6px 0 10px}th,td{padding:6px 9px;text-align:right;border-bottom:1px solid var(--rule)}th{color:var(--mut);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.04em}td:first-child,th:first-child{text-align:left}tr:hover td{background:color-mix(in srgb,var(--ac) 6%,transparent)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px}.kpi b{display:block;font-size:26px;font-weight:700;line-height:1.2}.kpi span{color:var(--mut);font-size:12px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:16px}.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}
+.chip{display:inline-flex;align-items:center;border:1px solid var(--rule);border-radius:999px;padding:2px 11px;font-size:12px;margin:3px 5px 3px 0}
+.hint{color:var(--mut);font-size:12px}.good{color:#1b8a4b;font-weight:600}.bad{color:var(--bad);font-weight:600}canvas{max-height:280px}
+.warn{background:#fff3cd;color:#664d03;padding:7px 24px;font-size:13px}
+#load{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:linear-gradient(135deg,#0a1a2a,#12405a);color:#eaf2f7;transition:opacity .6s}
+#load.off{opacity:0;pointer-events:none}#load b{font-size:20px}#load span{opacity:.7;font-size:13px}
+.spin{width:68px;height:68px;border-radius:50%;background:conic-gradient(from 0deg,transparent,#5ec8e5);-webkit-mask:radial-gradient(circle 24px,transparent 97%,#000 100%);mask:radial-gradient(circle 24px,transparent 97%,#000 100%);animation:sp 1s linear infinite}@keyframes sp{to{transform:rotate(360deg)}}
+@media(max-width:860px){.tab.on{grid-template-columns:1fr}.row2{grid-template-columns:1fr}aside{position:static}}
+</style></head><body>
+<div id="load"><div class="spin"></div><b>Cyclone Forecast Lab</b><span id="ltxt">Loading…</span></div>
+<header><h1>Cyclone Forecast Lab</h1>
+<nav id="tabs"><button data-t="fc" class="on">Forecast</button><button data-t="bt">Backtest past storms</button><button data-t="st">Accuracy statistics</button></nav>
+<span id="badge"></span></header><div id="warn"></div>
+
+<section id="t-fc" class="tab on"><aside>
+<b>Storm now</b>
+<label>Latitude (°, south negative)</label><input id="lat" type="number" step="0.1" value="16">
+<label>Longitude (°, west negative)</label><input id="lon" type="number" step="0.1" value="-60">
+<label>Max wind (kt, 1-min)</label><input id="v" type="number" value="70">
+<label>Heading (° of travel, 270 = due west)</label><input id="hd" type="number" value="285">
+<label>Forward speed (km/h)</label><input id="sp" type="number" value="22">
+<label>Wind change over last 24 h (kt)</label><input id="dv" type="number" value="15">
+<label>Date</label><input id="dt" type="date">
+<label>Models to overlay &nbsp;<a id="fall">all</a> · <a id="fnone">none</a></label><div class="chk" id="fchk"></div>
+<button class="go" id="run">Run forecast</button>
+<p class="hint" id="bas"></p><p class="hint">Click the map to move the storm. Circles show the model's mean historical track error for that basin.</p></aside>
+<div class="stack"><div id="fmap" class="map"></div><div id="fout" class="card"></div></div></section>
+
+<section id="t-bt" class="tab"><aside>
+<b>Unseen storms</b><p class="hint">Only storms from the hold-out years, never used in training.</p>
+<label>Basin</label><select id="bb"></select><label>Season</label><select id="by"></select>
+<label>Storm</label><select id="bs"></select>
+<label>Forecast origin (6-hourly fix)</label><input id="bi" type="range" min="4" value="4"><div class="hint" id="bil"></div>
+<label>Model</label><select id="bm"></select>
+<button class="go" id="bscore">Score the whole storm</button></aside>
+<div class="stack"><div id="bmap" class="map"></div><div id="bout" class="card"></div></div></section>
+
+<section id="t-st" class="tab"><aside>
+<b>Hold-out accuracy</b><label>Ocean basin</label><select id="sb"></select>
+<label>Metric</label><select id="sm"><option value="track">Track error (km)</option><option value="mae">Wind MAE (kt)</option></select>
+<label>Lead time (h)</label><select id="sl"></select>
+<label>Map layer</label><select id="sy"><option value="24">Error at +24 h</option><option value="48">Error at +48 h</option><option value="72">Error at +72 h</option><option value="act">Historical activity</option></select>
+<label>Models to compare in charts</label><div class="chk" id="mchk"></div><p class="hint" id="sinfo"></p></aside>
+<div class="stack"><div class="kpis" id="kp"></div><div id="smap" class="map"></div>
+<div class="row2"><div class="card"><b>Error growth with lead time</b><canvas id="c1"></canvas></div><div class="card"><b>Error by month (selected lead)</b><canvas id="c2"></canvas></div></div>
+<div class="card"><b>Model leaderboard</b> <span class="hint">sorted by the selected metric and lead for the selected basin · ● = also runs in the Forecast tab; all others are benchmarked in Python only</span><div id="lb" style="overflow-x:auto"></div></div>
+<div class="card"><b>Month × basin heat table</b> <span class="hint">ensemble, selected metric and lead; blank = fewer than 5 cases</span><div id="heat" style="overflow-x:auto"></div></div></div></section>
+
+<script type="application/json" id="appdata">/*__APP_DATA__*/null</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+let D=null,SPEC={};
+const $=s=>document.querySelector(s),KM=111.32,R=Math.PI/180,MON='JFMAMJJASOND';
+const SS=[[137,'#8e1b5e','Cat 5'],[113,'#c8201f','Cat 4'],[96,'#e8602c','Cat 3'],[83,'#f39a2b','Cat 2'],[64,'#f2c744','Cat 1'],[34,'#2fa36b','Tropical storm'],[0,'#5ec8e5','Depression']];
+const cat=v=>SS.find(s=>v>=s[0]),wrap=x=>((x+180)%360+360)%360-180;
+const BOX={NA:[[5,-98],[45,-10]],EP:[[5,-140],[35,-90]],WP:[[0,105],[45,170]],NI:[[3,45],[28,98]],SI:[[-35,30],[0,120]],SP:[[-35,150],[0,215]],SA:[[-35,-60],[0,15]]};
+const lab=m=>D.stats.labels[m]||m;
+// ---------- model core: mirrors features.py / export_app.py ----------
+function disp(a1,o1,a2,o2){return[wrap(o2-o1)*KM*Math.cos((a1+a2)/2*R),(a2-a1)*KM]}
+function basin(lat,lon){lon=wrap(lon);if(lat>=0){const b=Math.min(Math.max(-83-1.5*(lat-8),-100),-83);return lon<b?1:lon<=20?0:lon<100?3:2}return lon>=-70&&lon<20?6:lon>=20&&lon<135?4:5}
+function feats(s){const{lat,lon,v}=s,[h6,h12,h24]=s.h,b=basin(lat,lon);
+ const m=(h,k)=>disp(h[0],h[1],lat,lon).map(x=>x/k),[e6,n6]=m(h6,6),[e12,n12]=m(h12,12),[e24,n24]=m(h24,24);
+ const ph=lat>=0?s.doy:(s.doy+210)%365,cl=D.clim[b][s.m-1][Math.min(Math.floor(Math.abs(lat)/5),9)],w=2*Math.PI*ph/365.25;
+ return[lat,Math.abs(lat),lat>=0?1:0,Math.sin(lon*R),Math.cos(lon*R),(lon%360+360)%360,...D.basins.map((_,i)=>+(i==b)),
+  v,v-h6[2],v-h12[2],v-h24[2],e6,n6,e12,n12,e24,n24,Math.sin(w),Math.cos(w),cl,cl-v]}
+function ev(M,x){let s=M.base;const F=Math.fround;for(const o of M.o){let i=o;while(M.f[i]>=0){const xv=F(x[M.f[i]]),t=F(M.t[i]);i=(M.lt?xv<t:xv<=t)?M.l[i]:M.r[i]}s+=M.v[i]}return s}
+function ll(lat,lon,dx,dy){const a=lat+dy/KM,c=Math.max(Math.cos((lat+a)/2*R),.05);return[a,wrap(lon+dx/(KM*c))]}
+function pres(b,v){const c=D.pres[D.basins[b]];return Math.round(c[0]*v*v+c[1]*v+c[2])}
+function raw(m,x){
+ if(m=='base')return[0,0,0];
+ if(m=='ens'){const g=raw('gbm',x),q=raw('rf',x);return[0,1,2].map(j=>D.ens_w[j][0]*g[j]+D.ens_w[j][1]*q[j])}
+ if(m=='stack'){const o=[0,0,0];for(const k in D.stack_w){const r=raw(k,x);for(let j=0;j<3;j++)o[j]+=r[j]*D.stack_w[k][j]}return o}
+ const S=SPEC[m];
+ if(S.t=='trees')return['dx','dy','dv'].map(n=>ev(S.m[n],x));
+ if(S.t=='lin')return S.w.map((w,j)=>w.reduce((a,wi,i)=>a+wi*(x[i]-S.mu[i])/S.sd[i],S.b[j]));
+ if(S.t=='mlp'){let a=x.map((v,i)=>(v-S.mu[i])/S.sd[i]);S.W.forEach((W,l)=>{a=W.map((r,k)=>{let t=S.b[l][k];for(let i=0;i<r.length;i++)t+=r[i]*a[i];return l<S.W.length-1?Math.max(0,t):t})});return a.map((v,j)=>v*S.ysd[j]+S.ymu[j])}
+ const b0=D.features.indexOf('b_NA'),bi=x.slice(b0,b0+7).indexOf(1);return S.k[bi*1000+x[x.length-1]]||S.d}
+function predict(s,model){const f=feats(s),I=n=>D.features.indexOf(n),b=basin(s.lat,s.lon);
+ return D.leads.map(L=>{const r=raw(model,[...f,L]),[la,lo]=ll(s.lat,s.lon,r[0]+L*f[I('e12')],r[1]+L*f[I('n12')]),v=Math.min(190,Math.max(10,s.v+r[2]));
+  return{L,lat:la,lon:lo,v,p:pres(b,v)}})}
+function unwrap(ps){const o=[];let p=null;for(const[a,b]of ps){const x=p===null?b:p+wrap(b-p);o.push([a,x]);p=x}return o}
+function dateParts(d){return{m:d.getUTCMonth()+1,doy:Math.round((Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate())-Date.UTC(d.getUTCFullYear(),0,0))/864e5)}}
+function selftest(){let w=0,bad='';for(const t of D.selftest){const[la,lo,v,a6,b6,c6,a12,b12,c12,a24,b24,c24,m,doy]=t.inp,f=feats({lat:la,lon:lo,v,h:[[a6,b6,c6],[a12,b12,c12],[a24,b24,c24]],m,doy});
+ D.leads.forEach((L,i)=>{for(const k in t.P){const r=raw(k,[...f,L]);for(let j=0;j<3;j++){const d=Math.abs(r[j]-t.P[k][j][i]);if(d>w){w=d;bad=k}}}})}
+ console.log('self-test vs Python over',Object.keys(D.selftest[0].P).length,'models: max deviation',w.toFixed(4),'(worst: '+bad+')',w<0.5?'OK':'MISMATCH');window.SELFTEST=w}
+// ---------- helpers ----------
+const maps={},charts={};
+function mk(id,center,zoom){if(maps[id])return maps[id];const m=L.map(id,{worldCopyJump:true}).setView(center,zoom);
+ L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',{attribution:'Tiles © Esri',maxZoom:8}).addTo(m);m._g=L.layerGroup().addTo(m);return maps[id]=m}
+function chart(id,cfg){if(charts[id])charts[id].destroy();charts[id]=new Chart($('#'+id),cfg)}
+const PAL={ens:'#0e7490',gbm:'#e8602c',rf:'#2fa36b',base:'#7a8793',stack:'#0d1b2a'};
+const col=m=>PAL[m]||`hsl(${(D.stats.models.indexOf(m)*53+20)%360},58%,44%)`;
+const sel=new Set();
+function dots(g,pts){pts.forEach(p=>L.circleMarker([p[0],p[1]],{radius:5,color:'#10222f',weight:1,fillColor:cat(p[2])[1],fillOpacity:1}).bindTooltip(Math.round(p[2])+' kt').addTo(g))}
+const km=(a,b,c,d)=>Math.hypot(...disp(a,b,c,d));
+// ---------- forecast tab ----------
+function runFc(){const lat=+$('#lat').value,lon=wrap(+$('#lon').value),v=+$('#v').value,sp=+$('#sp').value,hd=+$('#hd').value*R,dv=+$('#dv').value;
+ const ms=[...document.querySelectorAll('#fchk input:checked')].map(c=>c.value);if(!ms.length){$('#fout').innerHTML='<span class="hint">Tick at least one model.</span>';return}
+ const d=dateParts(new Date($('#dt').value+'T12:00:00Z')),e=sp*Math.sin(hd),n=sp*Math.cos(hd);
+ const back=k=>{const[a,o]=ll(lat,lon,-e*k,-n*k);return[a,o,v-dv*k/24]};
+ const s={lat,lon,v,h:[back(6),back(12),back(24)],...d},b=basin(lat,lon),bn=D.basins[b];
+ $('#bas').textContent='Detected basin: '+D.basin_names[bn];
+ const m=mk('fmap',[lat,lon],4),g=m._g;g.clearLayers();
+ const RS=ms.map(k=>{const P=predict(s,k);return{k,P,pts:unwrap([[lat,lon],...P.map(p=>[p.lat,p.lon])])}}),main=RS[0];
+ const err=D.stats.basin[bn]?D.stats.basin[bn].ens.track:[];
+ main.P.forEach((p,i)=>{if(err[i])L.circle(main.pts[i+1],{radius:err[i]*1000,color:'#0e7490',weight:1,fillOpacity:.05}).addTo(g)});
+ RS.forEach(r=>{L.polyline(r.pts,{color:col(r.k),weight:r.k=='base'?2:3,dashArray:r.k=='base'?'2 6':null,opacity:.9}).addTo(g);
+  r.P.forEach((p,i)=>L.circleMarker(r.pts[i+1],{radius:4,color:'#fff',weight:1,fillColor:col(r.k),fillOpacity:1}).bindTooltip(`${lab(r.k)} +${p.L}h · ${Math.round(p.v)} kt (${cat(p.v)[2]}) · ~${p.p} hPa`).addTo(g))});
+ L.circleMarker(main.pts[0],{radius:7,color:'#0d1b2a',weight:2,fillColor:cat(v)[1],fillOpacity:1}).bindTooltip('Storm now').addTo(g);m.setView(main.pts[4],4);
+ const pk=r=>r.P.reduce((a,p)=>p.v>a.v?p:a,r.P[0]),dotc=k=>`<span class="dot" style="background:${col(k)}"></span>`;
+ const grid=f=>`<table><tr><th>Lead</th>${RS.map(r=>`<th>${dotc(r.k)}${lab(r.k)}</th>`).join('')}</tr>${D.leads.map((l,i)=>`<tr><td>+${l} h</td>${RS.map(r=>`<td>${f(r.P[i])}</td>`).join('')}</tr>`).join('')}</table>`;
+ $('#fout').innerHTML=`<b>Forecast comparison (${RS.length} model${RS.length>1?'s':''})</b><div>${RS.map(r=>{const p=pk(r);return`<span class="chip">${dotc(r.k)}${lab(r.k)}: peak ${Math.round(p.v)} kt (${cat(p.v)[2]}) at +${p.L} h</span>`}).join('')}</div>
+ <canvas id="c3" style="margin:10px 0"></canvas><b>Position (lat, lon)</b><div style="overflow-x:auto">${grid(p=>p.lat.toFixed(1)+', '+p.lon.toFixed(1))}</div><b>Max wind (kt)</b><div style="overflow-x:auto">${grid(p=>`<span class="dot" style="background:${cat(p.v)[1]}"></span>${Math.round(p.v)}`)}</div>
+ <p class="hint">Shaded circles: mean historical track error of the ensemble in this basin. Hover a marker for category and estimated pressure. Experimental: use official agency forecasts (NHC, JTWC, JMA, IMD, BoM, Météo-France) for decisions.</p>`;
+ chart('c3',{type:'line',data:{labels:['now',...D.leads.map(l=>'+'+l+'h')],datasets:RS.map(r=>({label:lab(r.k),data:[v,...r.P.map(p=>Math.round(p.v))],borderColor:col(r.k),backgroundColor:col(r.k),tension:.25,pointRadius:2,borderDash:r.k=='base'?[4,4]:[]}))},options:{plugins:{legend:{labels:{boxWidth:10}}},scales:{y:{title:{display:true,text:'wind (kt)'}}}}})}
+// ---------- backtest tab ----------
+let cur=null;
+function fillStorms(){const b=$('#bb').value,y=$('#by').value;cur=D.storms.filter(s=>(b=='all'||s.b==b)&&(y=='all'||s.y==y));
+ $('#bs').innerHTML=cur.map((s,i)=>`<option value="${i}">${s.y} ${s.n} (${s.b}, ${s.p.length} fixes)</option>`).join('');setStorm()}
+function setStorm(){const s=cur[$('#bs').value];if(!s)return;const r=$('#bi');r.max=s.p.length-2;r.value=Math.min(Math.max(4,Math.floor(s.p.length/3)),s.p.length-2);runBt()}
+function stateAt(s,i){const p=s.p[i];return{lat:p[0],lon:p[1],v:p[2],h:[s.p[i-1],s.p[i-2],s.p[i-4]],...dateParts(new Date((s.t0+6*i)*36e5))}}
+function runBt(){const s=cur[$('#bs').value];if(!s)return;const i=+$('#bi').value,md=$('#bm').value,st=stateAt(s,i),P=predict(st,md),B=predict(st,'base');
+ $('#bil').textContent='Origin '+new Date((s.t0+6*i)*36e5).toISOString().slice(0,13).replace('T',' ')+'Z · '+s.p[i][2]+' kt';
+ const m=mk('bmap',s.p[i],4),g=m._g;g.clearLayers();const obs=unwrap(s.p.map(p=>[p[0],p[1]])),off=obs[i][1]-s.p[i][1];
+ L.polyline(obs,{color:'#7a8793',weight:2}).addTo(g);dots(g,obs.map((o,k)=>[o[0],o[1],s.p[k][2]]));
+ const fp=unwrap([[st.lat,st.lon],...P.map(p=>[p.lat,p.lon])]).map(p=>[p[0],p[1]+off]);L.polyline(fp,{color:'#0b7285',weight:3,dashArray:'6 4'}).addTo(g);
+ let rows='';P.forEach((p,k)=>{const j=i+p.L/6;if(j>=s.p.length)return;const t=s.p[j],dk=km(p.lat,p.lon,t[0],t[1]),bk=km(B[k].lat,B[k].lon,t[0],t[1]),we=p.v-t[2];
+  L.circleMarker(fp[k+1],{radius:6,color:'#0b7285',fillColor:'#fff',fillOpacity:1,weight:2}).bindTooltip('+'+p.L+'h forecast '+Math.round(p.v)+' kt').addTo(g);L.polyline([fp[k+1],obs[j]],{color:'#c8201f',weight:1}).addTo(g);
+  rows+=`<tr><td>+${p.L} h</td><td>${Math.round(dk)}</td><td>${Math.round(bk)}</td><td>${Math.round(p.v)} / ${t[2]}</td><td class="${Math.abs(we)<=10?'good':'bad'}">${we>0?'+':''}${Math.round(we)}</td></tr>`});
+ m.fitBounds(L.latLngBounds(obs.concat(fp)).pad(.2));
+ $('#bout').innerHTML=`<b>${s.n} ${s.y}: ${lab(md)} forecast from the chosen origin vs what happened</b><p class="hint">Blue dashed = forecast, grey = observed best track, red lines = error at each lead.</p>
+ <table><tr><th>Lead</th><th>Track error (km)</th><th>Persistence error (km)</th><th>Wind fcst / obs (kt)</th><th>Wind error</th></tr>${rows||'<tr><td colspan=5>Storm ends before the first lead.</td></tr>'}</table>`}
+function scoreStorm(){const s=cur[$('#bs').value],md=$('#bm').value,A={};
+ for(let i=4;i<s.p.length-1;i++){const st=stateAt(s,i),P=predict(st,md),B=predict(st,'base');P.forEach((p,k)=>{const j=i+p.L/6;if(j>=s.p.length)return;const t=s.p[j];
+  const a=A[p.L]=A[p.L]||{n:0,k:0,bk:0,w:0,bw:0};a.n++;a.k+=km(p.lat,p.lon,t[0],t[1]);a.bk+=km(B[k].lat,B[k].lon,t[0],t[1]);a.w+=Math.abs(p.v-t[2]);a.bw+=Math.abs(B[k].v-t[2])})}
+ const f=(x,n)=>Math.round(x/n),c=(a,b)=>`<span class="${a<=b?'good':'bad'}">${a}</span>`;
+ $('#bout').innerHTML+=`<div style="margin-top:14px"><b>Whole-storm score: every origin from the 5th fix on (${lab(md)} vs persistence)</b>
+ <table><tr><th>Lead</th><th>Origins</th><th>Track km</th><th>Persistence km</th><th>Wind MAE kt</th><th>Persistence kt</th></tr>${Object.entries(A).map(([L,a])=>`<tr><td>+${L} h</td><td>${a.n}</td><td>${c(f(a.k,a.n),f(a.bk,a.n))}</td><td>${f(a.bk,a.n)}</td><td>${c(f(a.w,a.n),f(a.bw,a.n))}</td><td>${f(a.bw,a.n)}</td></tr>`).join('')}</table></div>`}
+// ---------- statistics tab ----------
+const ramp=(t,a)=>a?`hsl(205,70%,${90-55*t}%)`:`hsl(${55-55*t},80%,${60-22*t}%)`;
+function runSt(){const S=D.stats,b=$('#sb').value,me=$('#sm').value,Ld=+$('#sl').value,li=S.leads.indexOf(Ld),src=b=='all'?S.overall:S.basin[b];if(!src)return;
+ const unit=me=='track'?'km':'kt';$('#sinfo').textContent=`Test years ${D.info.test_from}+ · ${b=='all'?'all basins':src.n_storms+' storms'} · ${src.ens.n[li]} forecasts at +${Ld} h`;
+ $('#kp').innerHTML=[[24,'track'],[48,'track'],[72,'track'],[24,'mae']].map(([l,k])=>{const i=S.leads.indexOf(l),e=src.ens[k][i],bs=src.base[k][i];
+  return`<div class="card kpi"><span>${k=='track'?'Track':'Wind'} error +${l} h</span><b>${e} ${k=='track'?'km':'kt'}</b><span>${bs?Math.round((1-e/bs)*100)+'% vs persistence':''}</span></div>`}).join('');
+ const mp=mk('smap',[15,150],2),gl=mp._g;gl.clearLayers();const lay=$('#sy').value,cells=lay=='act'?D.activity:S.grid[lay],vi=lay=='act'?2:(me=='track'?2:3),bi=D.basins.indexOf(b);
+ const mx=Math.max(...cells.map(c=>c[vi]));
+ cells.forEach(c=>{if(b!='all'&&basin(c[0]+2.5,c[1]+2.5)!=bi)return;
+  for(const sh of[0,360])L.rectangle([[c[0],c[1]+sh],[c[0]+5,c[1]+5+sh]],{stroke:false,fillColor:ramp(c[vi]/mx,lay=='act'),fillOpacity:.75}).bindTooltip(lay=='act'?c[2]+' fixes, mean '+c[3]+' kt':`${c[2]} km · ${c[3]} kt MAE · n=${c[4]}`).addTo(gl)});
+ if(b!='all')mp.fitBounds(BOX[b]);else mp.setView([15,150],2);
+ chart('c1',{type:'line',data:{labels:S.leads.map(l=>'+'+l+'h'),datasets:S.models.filter(m=>sel.has(m)).map(m=>({label:S.labels[m],data:src[m][me],borderColor:col(m),backgroundColor:col(m),borderDash:m=='base'?[5,4]:[],tension:.25,pointRadius:2}))},options:{plugins:{legend:{labels:{boxWidth:10}}},scales:{y:{title:{display:true,text:unit}}}}});
+ const agg=m=>{const rows=Object.values(S.month).map(x=>x[m][Ld]);return[...Array(12).keys()].map(k=>{let s=0,n=0;rows.forEach(r=>{if(r[me][k]!=null){s+=r[me][k]*r.n[k];n+=r.n[k]}});return n?+(s/n).toFixed(1):null})};
+ const mser=m=>b=='all'?agg(m):S.month[b][m][Ld][me];
+ chart('c2',{type:'bar',data:{labels:MON.split(''),datasets:S.models.filter(m=>sel.has(m)).slice(0,5).map(m=>({label:S.labels[m],data:mser(m),backgroundColor:col(m)}))},options:{scales:{y:{title:{display:true,text:unit+' at +'+Ld+' h'}}}}});
+ const key=me=='track'?'track':'mae',rows=S.models.filter(m=>src[m][key][li]!=null).sort((a,b)=>src[a][key][li]-src[b][key][li]),best=src[rows[0]][key][li],worst=Math.max(...rows.map(m=>src[m][key][li])),bs=src.base[key][li];
+ $('#lb').innerHTML=`<table><tr><th>#</th><th>Model</th><th>${me=='track'?'Track km':'Wind MAE kt'}</th><th>vs persistence</th><th>Track km</th><th>Wind MAE kt</th><th>Wind bias kt</th><th>Within 10 kt</th><th>Train s</th></tr>${rows.map((m,i)=>{const v=src[m][key][li],w=Math.round(100*v/worst),sk=Math.round((1-v/bs)*100);
+  return`<tr><td>${i+1}</td><td>${D.browser.includes(m)?'● ':''}${S.labels[m]}</td><td style="background:linear-gradient(90deg,rgba(11,114,113,.28) ${w}%,transparent ${w}%)">${v}</td><td class="${sk>0?'good':sk<0?'bad':''}">${sk>0?'+':''}${sk}%</td><td>${src[m].track[li]}</td><td>${src[m].mae[li]}</td><td>${src[m].bias[li]}</td><td>${src[m].hit10[li]}%</td><td>${S.secs&&S.secs[m]!=null?S.secs[m]:'–'}</td></tr>`}).join('')}</table>`;
+ const all=S.basins.filter(x=>S.month[x]),vals=all.flatMap(x=>S.month[x].ens[Ld][me]).filter(x=>x!=null),lo=Math.min(...vals),hi=Math.max(...vals);
+ $('#heat').innerHTML=`<table><tr><th>Basin</th>${MON.split('').map(x=>`<th>${x}</th>`).join('')}</tr>${all.map(x=>`<tr><td>${x}</td>${S.month[x].ens[Ld][me].map((v,k)=>v==null?'<td></td>':`<td title="n=${S.month[x].ens[Ld].n[k]}" style="background:${ramp((v-lo)/(hi-lo||1))};color:#10222f">${Math.round(v)}</td>`).join('')}</tr>`).join('')}</table>`}
+// ---------- boot ----------
+function init(){SPEC={gbm:{t:'trees',m:D.trees.gbm},rf:{t:'trees',m:D.trees.rf},...D.zoo};$('#badge').textContent=`Trained ${D.info.years[0]}–${D.info.train_end} · tuned to ${D.info.val_end} · tested ${D.info.test_from}+ · ${D.info.storms} storms · ${D.gbm_label}`;
+ if(D.info.synthetic)$('#warn').innerHTML='<div class="warn">Demo bundle built from SYNTHETIC data: numbers are not meteorologically meaningful. Re-run run_pipeline.py with real IBTrACS data.</div>';
+ $('#dt').value=new Date().toISOString().slice(0,10);
+ $('#fchk').innerHTML=D.browser.map(m=>`<label><input type="checkbox" value="${m}" ${['ens','base'].includes(m)?'checked':''}><span class="dot" style="background:${col(m)};margin:0"></span>${lab(m)}</label>`).join('');
+ document.querySelectorAll('#fchk input').forEach(c=>c.onchange=runFc);
+ const setAll=v=>()=>{document.querySelectorAll('#fchk input').forEach(c=>c.checked=v);runFc()};$('#fall').onclick=setAll(true);$('#fnone').onclick=setAll(false);
+ $('#bm').innerHTML=D.browser.filter(m=>m!='base').map(m=>`<option value="${m}">${lab(m)}</option>`).join('');
+ const bs=D.basins.filter(b=>D.storms.some(s=>s.b==b)),ys=[...new Set(D.storms.map(s=>s.y))];
+ $('#bb').innerHTML='<option value="all">All basins</option>'+bs.map(b=>`<option value="${b}">${D.basin_names[b]}</option>`).join('');
+ $('#by').innerHTML='<option value="all">All seasons</option>'+ys.map(y=>`<option>${y}</option>`).join('');
+ $('#sb').innerHTML='<option value="all">All basins</option>'+Object.keys(D.stats.basin).map(b=>`<option value="${b}">${D.basin_names[b]}</option>`).join('');
+ $('#sl').innerHTML=D.leads.map(l=>`<option ${l==48?'selected':''}>${l}</option>`).join('');
+ const S0=D.stats,i48=S0.leads.indexOf(48),top=S0.models.filter(m=>!['ens','base','stack'].includes(m)).sort((a,b)=>S0.overall[a].track[i48]-S0.overall[b].track[i48]).slice(0,3);
+ ['ens','stack','base',...top].forEach(m=>S0.models.includes(m)&&sel.add(m));
+ $('#mchk').innerHTML=S0.models.map(m=>`<label><input type="checkbox" value="${m}" ${sel.has(m)?'checked':''}>${S0.labels[m]}</label>`).join('');
+ document.querySelectorAll('#mchk input').forEach(c=>c.onchange=()=>{c.checked?sel.add(c.value):sel.delete(c.value);runSt()});
+ $('#run').onclick=runFc;['bb','by'].forEach(i=>$('#'+i).onchange=fillStorms);$('#bs').onchange=setStorm;$('#bi').oninput=runBt;$('#bm').onchange=runBt;$('#bscore').onclick=()=>{runBt();scoreStorm()};
+ ['sb','sm','sl','sy'].forEach(i=>$('#'+i).onchange=runSt);
+ document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#tabs button,.tab').forEach(x=>x.classList.remove('on'));b.classList.add('on');$('#t-'+b.dataset.t).classList.add('on');
+  if(b.dataset.t=='bt'&&!cur)fillStorms();if(b.dataset.t=='st')runSt();setTimeout(()=>Object.values(maps).forEach(m=>m.invalidateSize()),50)});
+ runFc();maps.fmap.on('click',e=>{$('#lat').value=e.latlng.lat.toFixed(1);$('#lon').value=wrap(e.latlng.lng).toFixed(1);runFc()});selftest()}
+function boot(){const t=$('#appdata').textContent.trim(),off=()=>$('#load').classList.add('off'),start=txt=>{$('#ltxt').textContent='Parsing model bundle…';setTimeout(()=>{D=JSON.parse(txt);$('#ltxt').textContent='Building maps…';setTimeout(()=>{init();off()},30)},30)};
+ if(t!='null')return start(t);off();
+ document.body.insertAdjacentHTML('beforeend','<div class="card" style="margin:18px">Load <code>app_data.json</code> (made by run_pipeline.py): <input type="file" id="ld" accept=".json"></div>');
+ $('#ld').onchange=e=>{$('#load').classList.remove('off');e.target.files[0].text().then(x=>{e.target.parentNode.remove();start(x)})}}
+requestAnimationFrame(()=>setTimeout(boot,40));
+</script></body></html>

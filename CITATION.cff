@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "Global Tropical Cyclone Forecast Lab"
+type: software
+authors:
+  - family-names: "PASAYAT"
+    given-names: "ARCHIT"
+date-released: "2026-10-16"
+license: MIT
+repository-code: "https://github.com/CheckCheck28/cyclone-forecast-lab"
+abstract: "Machine-learning track and intensity forecasts (6-72 h) for all tropical-cyclone basins, with an interactive browser app, backtesting and per-basin accuracy statistics."
+keywords: [tropical cyclones, hurricanes, machine learning, forecasting, IBTrACS, XGBoost]
