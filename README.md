@@ -2,7 +2,7 @@
 
 **Machine-learning forecasts of tropical-cyclone track and intensity (6-72 h) for every ocean basin, with 15+ models benchmarked head-to-head and an interactive browser app.**
 
-**[Live demo](https://<your-username>.github.io/cyclone-forecast-lab/)**
+**[Live demo](https://checkcheck28.github.io/cyclone-forecast-lab/)**
 
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue) ![License](https://img.shields.io/badge/license-MIT-green) ![Status](https://img.shields.io/badge/status-research%20%2F%20portfolio-lightgrey)
 
@@ -24,7 +24,7 @@
 
 ## Quick start
 ```bash
-git clone https://github.com/<your-username>/cyclone-forecast-lab.git
+git clone https://github.com/CheckCheck28/cyclone-forecast-lab.git
 cd cyclone-forecast-lab
 python -m venv .venv
 source .venv/bin/activate            # Windows: .venv\Scripts\activate
@@ -72,16 +72,16 @@ Every model predicts the same three targets (east km, north km, wind change in k
 
 Add your own: write one function with the `@zoo("key", "Label")` decorator in `models.py` that returns an object with `.predict(X)`.
 
-## Results
+## Results of some models
 Fill in from your own run (`outputs/model_comparison.csv` has everything).
 
 | Model | Track error +24 h (km) | Track error +48 h (km) | Wind MAE +24 h (kt) | Skill vs persistence (48 h track) |
 |---|---|---|---|---|
-| Persistence baseline | | | | 0% |
-| Ridge regression | | | | |
-| Random Forest | | | | |
-| XGBoost | | | | |
-| Stacked ensemble | | | | |
+| Persistence baseline | 177.6 | 425.1 | 16.43 | 0% |
+| Ridge regression | 158.4 | 355.5 | 12.85 | 16.4% |
+| Random Forest | 162.1 | 371.3 | 13.11 | 12.7% |
+| XGBoost | 151.1 | 349.0 | 12.22 | 17.9% |
+| Stacked ensemble | 153.3 | 354.2 | 12.48 | 16.7% |
 
 ## How it works
 ```
